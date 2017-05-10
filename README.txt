@@ -12,3 +12,5 @@ python -m pip install SpeechRecognition
 Need to provide your own API KEY from newsapi.org. 
 Add it in the API_KEY.txt file inside data folder:
 news_org_api: xxxxxxxxxxxxxxxxxx
+----------------------------------------
+----------------------------------------

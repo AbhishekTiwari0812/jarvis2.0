@@ -34,8 +34,7 @@ class news_source():
 
 
 def get_news_source_list():
-	'''Parses the news resources file to get the details of news channels.
-	'''
+	'''Parses the news resources file to get the details of news channels.'''
 	import json 
 	try:
 		f = open('./data/news_sources_json.txt','r')

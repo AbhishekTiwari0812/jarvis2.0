@@ -4,7 +4,6 @@ def read_audio_input():
 	input and returns a string as output.
 	Uses Google audio API to convert audio to text
 	NOTE: number of request per day is limited to 100.'''
-
 	import speech_recognition as sr
 	r = sr.Recognizer()
 	m = sr.Microphone()
@@ -44,6 +43,7 @@ def read_audio_input():
 def categorize_command( input_string ):
 	'''converts the input command to a more fine grained 
 	command to make it easier to understand'''
+	input_string = input_string.lower()
 	possible_list = input_string.split()
 	
 	# news fetch
@@ -52,9 +52,9 @@ def categorize_command( input_string ):
 		if( ind + 2 < len( possible_list ) ):
 			if possible_list[ind+1] == "on":
 				category = possible_list[ind+2]
-				return ("news", category)
+				return ["news", category]
 		else:
-			return ("news")
+			return ["news"]
 	
 	# terminal start commands
 	elif "start" in possible_list\
@@ -74,17 +74,40 @@ def categorize_command( input_string ):
 			ind = possible_list.index("run")
 		except ValueError:
 			a = 1+1 # do nothing
-		return ("run", possible_list[1].lower() + ".exe")
+		return ["run", possible_list[1].lower() + ".exe"]
 
+	# fetching emails command
+	elif "email" in possible_list\
+	 or "emails" in possible_list:
+		return ["email"]
 
-	elif True:
-		return "no match"
+	# PC shutdown related commands
+	elif "shutdown" in possible_list:
+		if "cancel" in possible_list:
+			return ["CANCEL_SHUTDOWN"] 
+		elif "minutes" in possible_list:
+			time_to_shut = possible_list[possible_list.index("minutes")-1]
+			return ["SHUTDOWN", time_to_shut]
+		elif "minute" in possible_list:
+			time_to_shut = possible_list[possible_list.index("minute")-1]
+			return ["SHUTDOWN", time_to_shut]
+		else:
+			return ["SHUTDOWN"]
 
 
 def run_on_cmd( process_name ):
 	import os
 	os.system("start " + process_name)
 
+
+def shutdown_pc( power_off_flag, time_dur=120 ):
+	import os
+	if( power_off_flag == "SHUTDOWN"):
+		print "System will shutdown in 2 minutes"
+		os.system("shutdown -s -t " + str(time_dur))
+	elif ( power_off_flag == "CANCEL_SHUTDOWN"):
+		os.system("shutdown -a")
+		print "Scheduled shutdown was cancelled"
 
 class news_item():
 	def __init__(self):
@@ -123,14 +146,21 @@ def get_news(topic):
 	print news_item_json
 	return news_item_json
 
+
+def print_pretty(json_string):
+	'''Converts json object to human readable text.'''
+	#TODO: implement this function ASAP
+	a = 1 + 1
+
 def process_audio_command():
 	#TODO: un-comment these lines after testing.
-	#input_command = read_audio_input()
-	#fine_command = categorize_command(input_command)
-	fine_command = ("news","electronics")
+	input_command = read_audio_input()
+	fine_command = categorize_command(input_command)
+	print fine_command
+	if(fine_command == None):
+		print "Sorry, I didn't understand that!\nTry again."
 	command_len = len( fine_command )
-	#if fine_command[0] == "news":
-	if True:
+	if fine_command[0] == "news":
 		if command_len == 2:
 			# when a category is specified.
 			return get_news(fine_command[1])
@@ -140,9 +170,18 @@ def process_audio_command():
 			# then the other part.
 			return get_news("")
 
-	if fine_command[0] == "run":
+	elif fine_command[0] == "run":
 		run_on_cmd( fine_command[1])
 		return None
+	elif fine_command[0] == "email":
+		from email_fetcher import show_emails
+		print "showing emails.."
+		show_emails()
+	elif fine_command[0] == "SHUTDOWN" or fine_command[0] == "CANCEL_SHUTDOWN":
+		print "shutdown flag:" + fine_command[0]
+		if(command_len == 2 ):
+			shutdown_pc(fine_command[0], int(fine_command[1])*60)
+		else:
+			shutdown_pc(fine_command[0],120)
 
-
-process_audio_command()	
+process_audio_command()
